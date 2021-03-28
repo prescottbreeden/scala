@@ -1,4 +1,4 @@
-package example
+package section2
 
 object ValuesVariablesTypes {
   val x = 42

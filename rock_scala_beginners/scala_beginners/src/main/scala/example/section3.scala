@@ -1,6 +1,8 @@
-package example
+package section3
 
 import java.util.Calendar
+// import section2.Functions._
+import section2.Functions.{greeting, fibb => fib}
 
 object OopsBasics {
   class Person(name: String, age: Int) {
@@ -374,7 +376,7 @@ object MethodNotations_Excercises {
       def ++[B >: A](list: MyList[B]): MyList[B]
     }
 
-    object Empty extends MyList[Nothing] {
+    case object Empty extends MyList[Nothing] {
       def printElements: String = ""
 
       def head: Nothing = throw new NoSuchElementException
@@ -387,7 +389,7 @@ object MethodNotations_Excercises {
       def ++[B](list: MyList[B]): MyList[B] = list
     }
 
-    class Cons[+A] (h: A, t: MyList[A]) extends MyList[A] {
+    case class Cons[+A] (h: A, t: MyList[A]) extends MyList[A] {
       def printElements: String = 
         if(t.isEmpty) "" + h
         else f"${h} ${t.printElements}"
@@ -464,6 +466,35 @@ object MethodNotations_Excercises {
     case object UnitedKingdom {
       def name: String = "The UK of GB and NI"
     }
+
+  }
+
+  object Expections {
+
+    // throwable classes extend the throwable class
+    throw new NullPointerException
+
+    // Exceptions -> error in code
+    // Error -> error in JVM
+    def getInt(withExceptions: Boolean): Int =
+      if (withExceptions) throw new RuntimeException("No int for you")
+      else 42
+
+    try {
+      // code that might throw
+      getInt(true)
+    } catch {
+      case e: RuntimeException => println("caught an exception")
+    } finally {
+      println("finally")
+    }
+
+    // finally doesn't influence exception -> use for sideEffects
+  }
+
+  object PackagingAndImports {
+    val thing = greeting("bob", 42)
+    val res = fib(1000)
 
   }
 }
