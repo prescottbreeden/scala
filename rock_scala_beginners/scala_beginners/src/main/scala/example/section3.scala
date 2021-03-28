@@ -139,7 +139,179 @@ object MethodNotations_Excercises {
     object Pirate {
       val N_EYES = 1
       def canFly: Boolean = true
+      def apply = new Priate
     }
+
+    class Priate
   }
 
+  object InheritanceAndTraits {
+    // constructors
+    class Person(name: String, age: Int)
+    class Adult(name: String, age: Int, idCard: String)
+      extends Person(name, age)
+
+    class Animal {
+      val creatureType = "wild"
+      def eat = println("nomnom")
+    }
+    class Cat extends Animal {
+      def crunch = {
+        eat
+        println("crunch crunch")
+      }
+    }
+    val cat = new Cat
+    cat.crunch
+
+    // overriding
+    class Dog(override val creatureType: String) extends Animal {
+      override def eat: Unit = println("crunch crunch")
+    }
+
+    val ralph = new Dog("Dump")
+    val sammy = new Dog("Pet")
+    sammy.eat
+
+    // preventing extension
+    // 1 - use final on member
+    // 2 - use final on class
+    // 3 - seal the class (file specific)
+  }
+
+  object AbstractDataTypes {
+    abstract class Animal {
+      val creatureType: String
+      def eat: Unit
+    }
+
+    class Dog extends Animal {
+      override val creatureType: String = "Pet"
+      override def eat: Unit = println("nom nom")
+    }
+
+    trait Carnivore {
+      val preferredMeal: String = "fresh meat"
+      def eat(animal: Animal): String
+    }
+    trait ColdBlooded
+
+    class Crocodile extends Animal with Carnivore with ColdBlooded {
+      val creatureType: String = "croc"
+      def eat: Unit = println("I'm a croc, nom nom nom")
+      def eat(animal: Animal): String = s"I'm a cros and I'm eathing a ${animal.creatureType}"
+    }
+
+    val dog = new Dog
+    val croc = new Crocodile
+    croc.eat(dog)
+    // croc.preferredMeal
+  }
+
+  object MyList_Excercise {
+    /*
+     * head - first element of the list
+     * tail - remainder of the list
+     * isEmpty - bool
+     * add(int) -> new list with element added
+     * toString -> a string representation of the list
+     */
+    abstract class MyList {
+      def head: Int
+      def tail: MyList
+      def isEmpty: Boolean
+      def add(element: Int): MyList
+      def printElements: String
+      override def toString(): String = s"[${printElements}]"
+    }
+
+    object Empty extends MyList {
+      def head: Int = throw new NoSuchElementException
+      def tail: MyList = throw new NoSuchElementException
+      def isEmpty: Boolean = true
+      def add(element: Int): MyList = new Cons(element, Empty)
+      def printElements: String = ""
+    }
+
+    class Cons (h: Int, t: MyList) extends MyList {
+      def head: Int = h
+      def tail: MyList = t
+      def isEmpty: Boolean = false
+      def add(element: Int): MyList = new Cons(element, this)
+      def printElements: String = 
+        if(t.isEmpty) "" + h
+        else f"${h} ${t.printElements}"
+    }
+
+    val list = new Cons(1, new Cons(2, new Cons(3, Empty)))
+
+  }
+
+  object Generics {
+    class Dingo[A] {
+      // use the type A
+    }
+
+    class MyMap[Key, Value]
+
+    val dingoInt = new Dingo[Int]
+    val dingoString = new Dingo[String]
+
+    object Dingo {
+      def empty[A]: Dingo[A] = ???
+    }
+
+    // variance problem
+    class Animal
+    class Cat extends Animal
+    class Dog extends Animal
+
+    // 1. yes, List[Cat] extends List[Animal] = COVARIANCE
+    class CovariantList[+A]
+    val animal: Animal = new Cat
+    val animalList: CovariantList[Animal] = new CovariantList[Cat]
+    // animalList.add(new Dog) ??? HARD QUESTION
+
+    // 2. No = INVARIANCE
+    class InvariantList[A]
+    val invariantAnimalList: InvariantList[Animal] = new InvariantList[Animal]
+
+    // 3. CONTRAVARIANCE
+    class Trainer[-A]
+    val trainer: Trainer[Cat] = new Trainer[Animal]
+    // logic: "because a cat belongs to animal, an animal trainer can train a cat"
+
+    // bounded types
+    class Cage[A <: Animal](animal: A)
+    val vage = new Cage(new Dog)
+  }
+
+  object Generics_Excercise {
+    abstract class MyList[+A] {
+      def head: A
+      def tail: MyList[A]
+      def isEmpty: Boolean
+      def add[B >: A](element: B): MyList[B]
+      def printElements: String
+      override def toString(): String = s"[${printElements}]"
+    }
+
+    object Empty extends MyList[Nothing] {
+      def head: Nothing = throw new NoSuchElementException
+      def tail: Nothing = throw new NoSuchElementException
+      def isEmpty: Boolean = true
+      def add[B >: Nothing](element: B): MyList[B] = new Cons(element, Empty)
+      def printElements: String = ""
+    }
+
+    class Cons[+A] (h: A, t: MyList[A]) extends MyList[A] {
+      def head: A = h
+      def tail: MyList[A] = t
+      def isEmpty: Boolean = false
+      def add[B >: A](element: B): MyList[B] = new Cons(element, this)
+      def printElements: String = 
+        if(t.isEmpty) "" + h
+        else f"${h} ${t.printElements}"
+    }
+  }
 }
