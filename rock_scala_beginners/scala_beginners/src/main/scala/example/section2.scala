@@ -1,9 +1,5 @@
 package example
 
-object Run extends App {
-
-}
-
 object ValuesVariablesTypes {
   val x = 42
 
@@ -45,7 +41,7 @@ object Functions {
 
   def factorial(n: Int): BigInt = {
     @annotation.tailrec
-    def go(n: Int, acc: Int): BigInt = 
+    def go(n: Int, acc: BigInt): BigInt =
       if (n <= 0) n
       else if (n == 1) acc
       else go(n - 1, n * acc)
@@ -54,7 +50,7 @@ object Functions {
 
   def fibb(n: Int): BigInt = {
     @annotation.tailrec
-    def go(n: Int, a: BigInt, b: BigInt): BigInt = 
+    def go(n: Int, a: BigInt, b: BigInt): BigInt =
       if (n == 0) a
       else if (n == 1) b
       else go(n - 1, b, a + b)
@@ -68,7 +64,26 @@ object Functions {
       else n % test != 0 && go(test - 1)
     n > 0 && go(n / 2)
   }
+}
 
+object CalledBy {
+  def calledByValue(x: Long): Unit = {
+    println(f"by value ${x}")
+    println(f"by value ${x}")
+  }
+
+  def calledByName(x: => Long): Unit = {
+    println(f"by name ${x}")
+    println(f"by name ${x}")
+  }
+
+  def infinite(): Int = 1 + infinite()
+
+  def printFirst(x: Int, y: => Int) = println(x)
+
+  // printFirst(infinite(), 42) -- crashes
+  // printFirst(42, infinite()) -- does not
 
 }
+
 
