@@ -3,6 +3,7 @@ package section3
 import java.util.Calendar
 // import section2.Functions._
 import section2.Functions.{greeting, fibb => fib}
+import MyConsList._
 
 object OopsBasics {
   class Person(name: String, age: Int) {
@@ -218,33 +219,6 @@ object MethodNotations_Excercises {
      * add(int) -> new list with element added
      * toString -> a string representation of the list
      */
-    abstract class MyList {
-      def head: Int
-      def tail: MyList
-      def isEmpty: Boolean
-      def add(element: Int): MyList
-      def printElements: String
-      override def toString(): String = s"[${printElements}]"
-    }
-
-    object Empty extends MyList {
-      def head: Int = throw new NoSuchElementException
-      def tail: MyList = throw new NoSuchElementException
-      def isEmpty: Boolean = true
-      def add(element: Int): MyList = new Cons(element, Empty)
-      def printElements: String = ""
-    }
-
-    class Cons (h: Int, t: MyList) extends MyList {
-      def head: Int = h
-      def tail: MyList = t
-      def isEmpty: Boolean = false
-      def add(element: Int): MyList = new Cons(element, this)
-      def printElements: String = 
-        if(t.isEmpty) "" + h
-        else f"${h} ${t.printElements}"
-    }
-
     val list = new Cons(1, new Cons(2, new Cons(3, Empty)))
 
   }
@@ -286,35 +260,6 @@ object MethodNotations_Excercises {
     // bounded types
     class Cage[A <: Animal](animal: A)
     val vage = new Cage(new Dog)
-  }
-
-  object Generics_Excercise {
-    abstract class MyList[+A] {
-      def head: A
-      def tail: MyList[A]
-      def isEmpty: Boolean
-      def add[B >: A](element: B): MyList[B]
-      def printElements: String
-      override def toString(): String = s"[${printElements}]"
-    }
-
-    object Empty extends MyList[Nothing] {
-      def head: Nothing = throw new NoSuchElementException
-      def tail: Nothing = throw new NoSuchElementException
-      def isEmpty: Boolean = true
-      def add[B >: Nothing](element: B): MyList[B] = new Cons(element, Empty)
-      def printElements: String = ""
-    }
-
-    class Cons[+A] (h: A, t: MyList[A]) extends MyList[A] {
-      def head: A = h
-      def tail: MyList[A] = t
-      def isEmpty: Boolean = false
-      def add[B >: A](element: B): MyList[B] = new Cons(element, this)
-      def printElements: String = 
-        if(t.isEmpty) "" + h
-        else f"${h} ${t.printElements}"
-    }
   }
 
   object AnonymousClasses {
