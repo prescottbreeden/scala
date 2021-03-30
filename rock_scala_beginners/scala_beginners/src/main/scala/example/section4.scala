@@ -126,20 +126,310 @@ object HOFandCurry_Exercises {
    *      andThen(f,g) => x => g(f(x))
    */
 
-
   val list1 = Cons(1, Cons(2, Cons(3, Empty)))
   val list2 = Cons(4, Cons(5, Cons(6, Empty)))
   val bob = list1 ++ list2
 
   def concat: ((String, String) => String) = (a: String, b: String) => s"$a$b"
   def add: (Int => Int => Int) = (a: Int) => (b: Int) => a + b
-  def whack: (Int, Int) => Boolean = (a, b) => 
+  def whack: (Int, Int) => Boolean = (a, b) =>
     if (a == 3) true
     else false
 
+  def curry(f: (Int, Int) => Int): (Int => Int => Int) =
+    x => y => f(x, y)
 
-  list1.filter(_ % 2 != 0)
-  list1.filter(_ % 2 == 0)
-  list2.map(_ * 2)
+  def unCurry(f: (Int => Int => Int)): (Int, Int) => Int =
+    (x, y) => f(x)(y)
+
+  def compose[A, B, C](f: A => B, g: C => A): C => B =
+    x => f(g(x))
+
+  def andThen[A, B, C](f: A => B, g: B => C): A => C =
+    x => g(f(x))
+
+  def superAdder2: (Int => Int => Int) = curry(_ + _)
+  def add4 = superAdder2(4)
+  add4(38)
+}
+
+object Map_FlatMap_ForComprehensions {
+  val list = List(1, 2, 3)
+  list.map(_ * 2)
+
+  val toPair = (x: Int) => List(x, x + 1)
+  list.flatMap(toPair)
+
+  val nums = List(1, 2, 3, 4)
+  val chars = List('a', 'b', 'c', 'd')
+  val colors = List("black", "white")
+
+  // challenge: generate List ("a1-white"..."d4-black")
+  nums.flatMap(n =>
+    chars.flatMap(c => colors.map(color => s"${c}${n}-${color}"))
+  )
+
+  // for comprehensions
+  val combinations = for {
+    n <- nums
+    c <- chars
+    color <- colors
+  } yield s"${c}${n}-${color}"
+
+  val combinationsWithFilters = for {
+    n <- nums if n % 2 == 0
+    c <- chars if c == 'a'
+    color <- colors if color == "black"
+  } yield s"${c}${n}-${color}"
+
+  // challenge: generate List ("a1"..."d4")
+  nums.flatMap(n => chars.map(c => s"${c}${n}"))
+
+  //foreach
+  list.foreach(println)
+
+  for {
+    n <- nums
+  } println(n)
+
+  // syntax overload
+  list.map { x =>
+    x * 2
+  }
+
+  list.map { _ * 2 }
+
+  list filter { _ % 2 == 0 }
+}
+
+object exercises {
+  /*
+   *  1. MyList supports for comprehesions?
+   *  2. A small collection of at most ONE element - Maybe[+T]
+   *    - map, flatMap, filter
+   */
+
+  val list1 = Cons(1, Cons(2, Cons(3, Empty)))
+  val list2 = Cons(4, Cons(5, Cons(6, Empty)))
+  val bob = list1 ++ list2
+
+  val nums = for {
+    n <- bob
+  } yield s"\nCommencing licks to center of tootsie pop: $n"
+
+  abstract class Maybe[+A] {
+    def filter(p: A => Boolean): Maybe[A]
+    def map[B](f: A => B): Maybe[B]
+    def flatMap[B](f: A => Maybe[B]): Maybe[B]
+  }
+
+  case object Nada extends Maybe[Nothing] {
+    def filter(p: Nothing => Boolean): Maybe[Nothing] = Nada
+    def flatMap[B](f: Nothing => Maybe[B]): Maybe[B] = Nada
+    def map[B](f: Nothing => B): Maybe[B] = Nada
+  }
+
+  case class Just[+T](value: T) extends Maybe[T] {
+    def filter(p: T => Boolean): Maybe[T] =
+      if (p(value) == true) Just(value)
+      else Nada
+
+    def map[B](f: T => B): Maybe[B] = Just(f(value))
+    def flatMap[B](f: T => Maybe[B]): Maybe[B] = f(value)
+  }
+
+  val just3 = Just(3)
+  just3.map(_ * 2)
+
+}
+
+object collections_overview {
+  /*
+   * scala.collections.immutable
+   *    - Traversable
+   *      - Iterable
+   *        - Set: do not contain duplicates
+   *          := HashSet
+   *          := SortedSet
+   *
+   *        - Map: association between keys -> values
+   *          := HashMap
+   *          := SortedMap
+   *
+   *        - Seq: collections that can be traversed in a set order
+   *          := IndexedSeq (quickly accessed)
+   *              - Vector
+   *              - Range
+   *              - String
+   *          := LinearSeq
+   *              - List
+   *              - Stream
+   *              - Stack
+   *              - Queue
+   *
+   *
+   * scala.collections.MUTABLE
+   *    - Traversable
+   *      - Iterable
+   *        - Set: do not contain duplicates
+   *          := HashSet
+   *          := LinkedHashSet
+   *
+   *        - Map: association between keys -> values
+   *          := HashMap
+   *          := MultiMap
+   *
+   *        - Seq: collections that can be traversed in a set order
+   *          := IndexedSeq
+   *              - StringBuilder
+   *              - ArrayBuffer (extends indexed and buffer)
+   *          := Buffer
+   *              - ArrayBuffer (extends indexed and buffer)
+   *              - ListBuffer
+   *          := LinearSeq
+   *              - LinkedList
+   *              - MutableList
+   *
+   */
+
+  // sequences
+
+  val seq = Seq(1, 2, 3, 4)
+  val range = 1 to 10
+  val list = List(1, 2, 3)
+  val prepended1 = 42 :: list
+  val prepended2 = 42 +: list
+  val weeeeeeeee = 42 +: list :+ 89
+  val apples5 = List.fill(5)("apple")
+  apples5.mkString("-|-")
+
+  // Arrays
+
+  val numbers = Array(1, 2, 3)
+  val threeElements = Array.ofDim[Int](3)
+  //mutation
+  numbers(2) = 0 // syntax sugar for numbers.update(2, 0)
+
+  // Arrays and Seqs
+  val numbersSeq: Seq[Int] = numbers // implicit conversion
+
+  // Vector
+  val vector = Vector(1, 2, 3)
+
+  // vectors vs lists
+
+  import scala.util.Random
+  val maxRuns = 1000
+  val maxCapacity = 1000000
+  def getWriteTime(collection: Seq[Int]): Double = {
+    val r = new Random
+    val times = for {
+      it <- 1 to maxRuns
+    } yield {
+      val currentTume = System.nanoTime()
+      collection.updated(r.nextInt(maxCapacity), 0)
+      System.nanoTime() - currentTume
+    }
+    times.sum * 1.0 / maxRuns
+  }
+
+}
+
+object TuplesAndMaps {
+
+  val twople = Tuple2(2, "I'm a two-ple")
+  val threeple = Tuple3(2, 3, "I'm a three-ple")
+  val easy = (2, "dingo")
+  easy.swap
+  easy.copy(_2 = "ate my semicolons")
+  val map = Map(
+    1 -> "rubber",
+    2 -> "baby",
+    3 -> "buggy",
+    4 -> "bumpers"
+  )
+
+  val phoneBook = Map(
+    ("jim", 555),
+    ("bob", 123),
+    ("mary", 789)
+  )
+
+  val users = Map(
+    (1, ("jim", 555)),
+    (2, ("bob", 123)),
+    (3, ("mary", 789))
+  )
+
+  users contains 2
+
+  val pair = 4 -> ("dingo", 1337)
+  val updated = users + pair
+
+  users map { user => user._2._1.toLowerCase -> user._2._2 }
+  updated filter { _._1 == 4 }
+
+  phoneBook.mapValues(n => n * 10)
+  phoneBook.toList
+  List(("dingo",555)).toMap //-> Map(dingo -> 555)
+
+  val names = List("Bob", "Janes", "Angela", "Mary", "Bart", "June")
+  names.groupBy(name => name.charAt(0))
+
+}
+
+object tuples_maps_exercises {
+  /*
+   *  1. What would happen if we map two orig entries "Jim" "JIM" into matching
+   *  2. Overly simplified social network based on maps
+   *      Person = (String, List(Person))
+   *      - add a person to network
+   *      - remove a person from network
+   *      - friend (mutual)
+   *      - unfreind
+   *
+   *      - number of friends of a person
+   *      - person with most friends
+   *      - how many people have NO friends
+   *      - if there is a social connection between two people (degree of sep)
+   */
+
+  val phoneBook = Map(
+    ("Jim", 1),
+    ("JIM", 2),
+    ("bob", 123),
+    ("mary", 789)
+  )
+
+  phoneBook map { entry => entry._1.toLowerCase -> entry._2 }
+  // destroys new matching hashes with latest (unless hash exists already)
+  
+
+  type Friend = Tuple2[String, List[String]]
+  case class DataBase[A](data: Map[Int, A] = Map(), index: Int = 0) {
+    def add() = ???
+    def update() = ???
+    def remove() = ???
+    def select() = ???
+  }
+
+  trait SocialNetwork {
+    var database: DataBase[Friend]
+    def addPerson(name: String): DataBase[Friend]
+    def removePerson(id: Int): DataBase[Friend]
+    def friend(id1: Int, id2: Int): DataBase[Friend]
+    def unfriend(id1: Int, id2: Int): DataBase[Friend]
+  }
+
+  object Butter extends SocialNetwork {
+    var database: DataBase[Friend] = ???
+    def addPerson(name: String): Data = {
+      // database + (newId -> (name, List("")))
+    }
+
+    def removePerson(id: Int): Data = ???
+    def friend(id1: Int, id2: Int): Data = ???
+    def unfriend(id1: Int, id2: Int): Data = ???
+  }
 
 }
