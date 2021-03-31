@@ -450,10 +450,10 @@ object tuples_maps_exercises {
     }
 
     def unfriend(id1: Int, id2: Int): Unit = {
-        val f1 = database.findById(id1)
-        val f2 = database.findById(id2)
-        database.updateById(id1, (f1._1, f1._2.filter(_ != f2._1)))
-        database.updateById(id2, (f2._1, f2._2.filter(_ != f1._1)))
+        val (name1, friends1) = database.findById(id1)
+        val (name2, friends2) = database.findById(id2)
+        database.updateById(id1, (name1, friends1.filter(_ != name2)))
+        database.updateById(id2, (name2, friends2.filter(_ != name1)))
     }
   }
 
@@ -470,5 +470,6 @@ object tuples_maps_exercises {
   DaButter.friend(2, 3)
   DaButter.friend(3, 4)
 
+  DaButter.unfriend(3, 4)
 
 }
