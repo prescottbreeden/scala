@@ -416,17 +416,13 @@ object tuples_maps_exercises {
       storage = storage + (index -> entity)
     }
 
-    def read(p: (Int, A) => Boolean) = for {
-      data <- storage if p(data._1, data._2)
-    } yield data
+    def findById(id: Int): A = storage(id)
 
-    def update(id: Int, entity: A) =
+    def updateById(id: Int, entity: A) =
       storage = storage + (id -> entity)
 
-    def delete(p: (Int, A) => Boolean) = {
-      storage = for {
-        data <- storage if p(data._1, data._2) == false
-      } yield data
+    def deleteById(id: Int) = {
+      storage = storage - (id)
     }
   }
 
@@ -439,19 +435,26 @@ object tuples_maps_exercises {
 
   object Butter extends SocialNetwork {
     var database: DataBase[Friend] = DataBase[Friend]()
-    def addPerson(name: String): Unit  = database.create((name, List[String]()))
-    def removePerson(id: Int): Unit = database.delete((ID, friend) => ID == id)
+
+    def addPerson(name: String): Unit  =
+      database.create((name, List[String]()))
+
+    def removePerson(id: Int): Unit =
+      database.deleteById(id)
+
     def friend(id1: Int, id2: Int): Unit = {
-      val friender = database.read((id, friend) => id == id1).head;
-      val friendee = database.read((id, friend) => id == id2).head;
-      val updatedFriender: Friend = 
-        (friender._2._1, friender._2._2 ++ List(friendee._2._1))
-      val updatedFriendee: Friend = 
-        (friendee._2._1, friendee._2._2 ++ List(friender._2._1))
-      database.update(friender._1, updatedFriender)
-      database.update(friendee._1, updatedFriendee)
+        val (name1, friends1) = database.findById(id1)
+        val (name2, friends2) = database.findById(id2)
+        database.updateById(id1, (name1, friends1.+: (name2)))
+        database.updateById(id2, (name2, friends2.+: (name1)))
     }
-    def unfriend(id1: Int, id2: Int): Unit = ???
+
+    def unfriend(id1: Int, id2: Int): Unit = {
+        val f1 = database.findById(id1)
+        val f2 = database.findById(id2)
+        database.updateById(id1, (f1._1, f1._2.filter(_ != f2._1)))
+        database.updateById(id2, (f2._1, f2._2.filter(_ != f1._1)))
+    }
   }
 
   val DaButter = Butter
