@@ -403,33 +403,69 @@ object tuples_maps_exercises {
 
   phoneBook map { entry => entry._1.toLowerCase -> entry._2 }
   // destroys new matching hashes with latest (unless hash exists already)
-  
 
   type Friend = Tuple2[String, List[String]]
-  case class DataBase[A](data: Map[Int, A] = Map(), index: Int = 0) {
-    def add() = ???
-    def update() = ???
-    def remove() = ???
-    def select() = ???
+
+  case class DataBase[A]() {
+
+    var storage: Map[Int, A] = Map()
+    var index = 0
+
+    def create(entity: A) = {
+      index = index + 1
+      storage = storage + (index -> entity)
+    }
+
+    def read(p: (Int, A) => Boolean) = for {
+      data <- storage if p(data._1, data._2)
+    } yield data
+
+    def update(id: Int, entity: A) =
+      storage = storage + (id -> entity)
+
+    def delete(p: (Int, A) => Boolean) = {
+      storage = for {
+        data <- storage if p(data._1, data._2) == false
+      } yield data
+    }
   }
 
   trait SocialNetwork {
-    var database: DataBase[Friend]
-    def addPerson(name: String): DataBase[Friend]
-    def removePerson(id: Int): DataBase[Friend]
-    def friend(id1: Int, id2: Int): DataBase[Friend]
-    def unfriend(id1: Int, id2: Int): DataBase[Friend]
+    def addPerson(name: String): Unit
+    def removePerson(id: Int): Unit
+    def friend(id1: Int, id2: Int): Unit
+    def unfriend(id1: Int, id2: Int): Unit
   }
 
   object Butter extends SocialNetwork {
-    var database: DataBase[Friend] = ???
-    def addPerson(name: String): Data = {
-      // database + (newId -> (name, List("")))
+    var database: DataBase[Friend] = DataBase[Friend]()
+    def addPerson(name: String): Unit  = database.create((name, List[String]()))
+    def removePerson(id: Int): Unit = database.delete((ID, friend) => ID == id)
+    def friend(id1: Int, id2: Int): Unit = {
+      val friender = database.read((id, friend) => id == id1).head;
+      val friendee = database.read((id, friend) => id == id2).head;
+      val updatedFriender: Friend = 
+        (friender._2._1, friender._2._2 ++ List(friendee._2._1))
+      val updatedFriendee: Friend = 
+        (friendee._2._1, friendee._2._2 ++ List(friender._2._1))
+      database.update(friender._1, updatedFriender)
+      database.update(friendee._1, updatedFriendee)
     }
-
-    def removePerson(id: Int): Data = ???
-    def friend(id1: Int, id2: Int): Data = ???
-    def unfriend(id1: Int, id2: Int): Data = ???
+    def unfriend(id1: Int, id2: Int): Unit = ???
   }
+
+  val DaButter = Butter
+  DaButter.addPerson("Bob Ross")
+  DaButter.addPerson("Ross Bob")
+  DaButter.addPerson("Furry Dinosaur")
+  DaButter.addPerson("Flippant Flamingo")
+  DaButter.addPerson("Dingo")
+
+  DaButter.friend(1, 2)
+  DaButter.friend(1, 3)
+  DaButter.friend(1, 4)
+  DaButter.friend(2, 3)
+  DaButter.friend(3, 4)
+
 
 }
