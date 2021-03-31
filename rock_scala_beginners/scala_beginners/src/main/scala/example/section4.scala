@@ -406,132 +406,85 @@ object tuples_maps_exercises {
 
 }
 
-object social_network_exercise {
-  val GenderOptions = Set(
-    Some("Toast"),
-    Some("Butter"),
-    Some("Toasty Butter"),
-    Some("Buttery Toast"),
-    Some("Burnt Toast"),
-    Some("Melted Butter"),
-    Some("Lettuce"),
-    Some("Butter Lettuce"),
-    None
+object Optionals {
+  val maybe42: Option[Int] = Some(42)
+  val maybe28: Option[Int] = None
+
+  def unsafeMethod(): String = null
+  val result = Some(unsafeMethod()) // Some(null) non non ono
+  val better = Option(unsafeMethod())
+
+  def backupMethod(): String = "A valid result"
+  val chainedResult = Option(unsafeMethod()).orElse(Option(backupMethod()))
+
+  // Design beter APIS
+  def betterUnsafe(): Option[String] = None
+  def betterBackup(): Option[String] = Some("A valid result")
+  val betterChained = unsafeMethod() orElse backupMethod()
+
+  maybe42.map(_ * 2)
+  maybe42.filter(_ < 10)
+  maybe42.flatMap(x => Option(x * 10))
+}
+
+object Options_exercises {
+  import scala.util.Random
+  val config: Map[String, String] = Map(
+    "host" -> "176.23.24.1",
+    "port" -> "80"
   )
-  case class Friend(
-      id: Int,
-      name: String,
-      gender: Option[String],
-      friends: Set[Friend]
-  )
 
-  object SocialNetwork {
-    val toast = """
-            /' `\              /'
-          /'     )         --/'--
-        /'      /'____     /'    
-      /'      /'/'    )  /'      
-    /'      /'/'    /' /'        
-(,/' (___,/' (___,/(__(__        
-                                 
-              _                                      
-            /' `\              /'    /'              
-          /'     )         --/'----/'--              
-        /' (___,/'         /'    /' ____      ____   
-      /'     )  /'    /  /'    /' /'    )   )'    )--
-    /'      /'/'    /' /'    /' /(___,/'  /'         
-(,/' (___,/' (___,/(__(__   (__(________/'           
-
-♥♥♥ Social Networking for Toast That Need Love ♥♥♥
-"""
-    private var index = 0
-    private var storage: Map[Int, Friend] = Map()
-
-    def searchById(id: Int) = {
-      val person = storage(id)
-      val friends = person.friends map { f => s"\n\t${f.id}: ${f.name}" }
-      s"\n${person.id}:: Name: ${person.name}, Gender: ${person.gender}, Friends: [${friends}]"
-    }
-
-    def addPerson(name: String, gender: Option[String]): Unit = {
-      index = index + 1
-      storage = storage + (index -> Friend(index, name, gender, Set()))
-    }
-
-    def removePerson(id: Int): Unit = {
-      storage(id).friends foreach { f => unfriend(id, f.id) }
-      storage = storage - id
-    }
-
-    def friend(id1: Int, id2: Int): Unit = {
-      val person1 = storage(id1)
-      val person2 = storage(id2)
-      storage = storage +
-        (id1 -> person1.copy(friends = person1.friends + person2)) +
-        (id2 -> person2.copy(friends = person2.friends + person1))
-    }
-
-    def unfriend(id1: Int, id2: Int): Unit = {
-      val person1 = storage(id1)
-      val person2 = storage(id2)
-      storage = storage +
-        (id1 -> person1.copy(friends =
-          person1.friends.filter(_.id != person2.id)
-        )) +
-        (id2 -> person2.copy(friends =
-          person2.friends.filter(_.id != person1.id)
-        ))
-    }
-
-    def numberOfFriends(id: Int): Int =
-      if (!storage.contains(id)) 0
-      else storage(id).friends.size
-
-    def mostFriends: String = storage.maxBy(_._2.friends.size)._2.name
-    def numberWithNoFriends: Int = storage.count(_._2.friends.isEmpty)
-
-    def socialConnection(id1: Int, id2: Int): Boolean = {
-      def bfs(
-          target: Friend,
-          consideredPeople: Set[Friend],
-          discoveredPeople: Set[Friend]
-      ): Boolean = {
-        if (discoveredPeople.isEmpty) false
-        else {
-          val person = discoveredPeople.head
-          if (person.id == target.id) true
-          else if (consideredPeople.contains(person))
-            bfs(target, consideredPeople, discoveredPeople.tail)
-          else
-            bfs(
-              target,
-              consideredPeople + person,
-              discoveredPeople.tail ++ storage(person.id).friends
-            )
-        }
-      }
-      bfs(storage(id2), Set(), storage(id1).friends)
-    }
-
+  class Connection {
+    def connect = "Connected" // connect to some server
   }
 
-  val DatButter = SocialNetwork
-  DatButter.addPerson("Bob Ross", Some("Burnt Toast"))
-  DatButter.addPerson("Ross Bob", Some("Lettuce"))
-  DatButter.addPerson("Furry Dinosaur", Some("Toast"))
-  DatButter.addPerson("Flippant Flamingo", Some("Butter"))
-  DatButter.addPerson("Dingo", gender = None)
+  object Connection {
+    val random = new Random(System.nanoTime())
 
-  DatButter.friend(1, 2)
-  DatButter.friend(1, 3)
-  DatButter.friend(1, 4)
-  DatButter.friend(2, 3)
-  DatButter.friend(3, 4)
+    def apply(host: String, port: String): Option[Connection] =
+      if (random.nextBoolean()) Some(new Connection)
+      else None
+  }
 
-  DatButter.unfriend(3, 4)
+  // try to establish a connection, if so - print the connect method
+  val host = config.get("host")
+  val port = config.get("port")
 
-  DatButter.numberOfFriends(1)
-  DatButter.mostFriends
-  DatButter.numberWithNoFriends
+  val connection = host.flatMap(h => port.flatMap(p => Connection(h, p)))
+  val connectionStatus = connection.map(_.connect)
+
+  // chained calls
+  config
+    .get("host")
+    .flatMap(host => config.get("port")
+    .flatMap(port => Connection(host, port))
+    .map(_.connect))
+
+  // for comprehesion
+  val status = for {
+    host <- config.get("host")
+    port <- config.get("port")
+    connection <- Connection(host, port)
+  } yield connection.connect
+}
+
+object handling_failure {
+  import scala.util.Failure
+  import scala.util.Success
+  import scala.util.Try
+  // create success and failure explicitly
+  val success = Success(3)
+  val failure = Failure(new RuntimeException("SUPER FAILURE"))
+
+  def unsafeMethod(): String = throw new RuntimeException("NO STRING FOR YOU BUSTER")
+  val potentialFailure = Try(unsafeMethod())
+
+  val anotherPotentialFail = Try {
+    // code that might throw
+  }
+
+  // utilities
+  potentialFailure.isSuccess
+  potentialFailure orElse Try(Success("Dingo ate my semicolons"))
 
 }
