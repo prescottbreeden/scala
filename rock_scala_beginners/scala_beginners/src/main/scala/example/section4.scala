@@ -371,7 +371,7 @@ object TuplesAndMaps {
 
   phoneBook.mapValues(n => n * 10)
   phoneBook.toList
-  List(("dingo",555)).toMap //-> Map(dingo -> 555)
+  List(("dingo", 555)).toMap //-> Map(dingo -> 555)
 
   val names = List("Bob", "Janes", "Angela", "Mary", "Bart", "June")
   names.groupBy(name => name.charAt(0))
@@ -404,72 +404,134 @@ object tuples_maps_exercises {
   phoneBook map { entry => entry._1.toLowerCase -> entry._2 }
   // destroys new matching hashes with latest (unless hash exists already)
 
-  type Friend = Tuple2[String, List[String]]
+}
 
-  case class DataBase[A]() {
+object social_network_exercise {
+  val GenderOptions = Set(
+    Some("Toast"),
+    Some("Butter"),
+    Some("Toasty Butter"),
+    Some("Buttery Toast"),
+    Some("Burnt Toast"),
+    Some("Melted Butter"),
+    Some("Lettuce"),
+    Some("Butter Lettuce"),
+    None
+  )
+  case class Friend(
+      id: Int,
+      name: String,
+      gender: Option[String],
+      friends: Set[Friend]
+  )
 
-    var storage: Map[Int, A] = Map()
-    var index = 0
+  object SocialNetwork {
+    val toast = """
+            /' `\              /'
+          /'     )         --/'--
+        /'      /'____     /'    
+      /'      /'/'    )  /'      
+    /'      /'/'    /' /'        
+(,/' (___,/' (___,/(__(__        
+                                 
+              _                                      
+            /' `\              /'    /'              
+          /'     )         --/'----/'--              
+        /' (___,/'         /'    /' ____      ____   
+      /'     )  /'    /  /'    /' /'    )   )'    )--
+    /'      /'/'    /' /'    /' /(___,/'  /'         
+(,/' (___,/' (___,/(__(__   (__(________/'           
 
-    def create(entity: A) = {
+♥♥♥ Social Networking for Toast That Need Love ♥♥♥
+"""
+    private var index = 0
+    private var storage: Map[Int, Friend] = Map()
+
+    def searchById(id: Int) = {
+      val person = storage(id)
+      val friends = person.friends map { f => s"\n\t${f.id}: ${f.name}" }
+      s"\n${person.id}:: Name: ${person.name}, Gender: ${person.gender}, Friends: [${friends}]"
+    }
+
+    def addPerson(name: String, gender: Option[String]): Unit = {
       index = index + 1
-      storage = storage + (index -> entity)
+      storage = storage + (index -> Friend(index, name, gender, Set()))
     }
 
-    def findById(id: Int): A = storage(id)
-
-    def updateById(id: Int, entity: A) =
-      storage = storage + (id -> entity)
-
-    def deleteById(id: Int) = {
-      storage = storage - (id)
+    def removePerson(id: Int): Unit = {
+      storage(id).friends foreach { f => unfriend(id, f.id) }
+      storage = storage - id
     }
-  }
-
-  trait SocialNetwork {
-    def addPerson(name: String): Unit
-    def removePerson(id: Int): Unit
-    def friend(id1: Int, id2: Int): Unit
-    def unfriend(id1: Int, id2: Int): Unit
-  }
-
-  object Butter extends SocialNetwork {
-    var database: DataBase[Friend] = DataBase[Friend]()
-
-    def addPerson(name: String): Unit  =
-      database.create((name, List[String]()))
-
-    def removePerson(id: Int): Unit =
-      database.deleteById(id)
 
     def friend(id1: Int, id2: Int): Unit = {
-        val (name1, friends1) = database.findById(id1)
-        val (name2, friends2) = database.findById(id2)
-        database.updateById(id1, (name1, friends1.+: (name2)))
-        database.updateById(id2, (name2, friends2.+: (name1)))
+      val person1 = storage(id1)
+      val person2 = storage(id2)
+      storage = storage +
+        (id1 -> person1.copy(friends = person1.friends + person2)) +
+        (id2 -> person2.copy(friends = person2.friends + person1))
     }
 
     def unfriend(id1: Int, id2: Int): Unit = {
-        val (name1, friends1) = database.findById(id1)
-        val (name2, friends2) = database.findById(id2)
-        database.updateById(id1, (name1, friends1.filter(_ != name2)))
-        database.updateById(id2, (name2, friends2.filter(_ != name1)))
+      val person1 = storage(id1)
+      val person2 = storage(id2)
+      storage = storage +
+        (id1 -> person1.copy(friends =
+          person1.friends.filter(_.id != person2.id)
+        )) +
+        (id2 -> person2.copy(friends =
+          person2.friends.filter(_.id != person1.id)
+        ))
     }
+
+    def numberOfFriends(id: Int): Int =
+      if (!storage.contains(id)) 0
+      else storage(id).friends.size
+
+    def mostFriends: String = storage.maxBy(_._2.friends.size)._2.name
+    def numberWithNoFriends: Int = storage.count(_._2.friends.isEmpty)
+
+    def socialConnection(id1: Int, id2: Int): Boolean = {
+      def bfs(
+          target: Friend,
+          consideredPeople: Set[Friend],
+          discoveredPeople: Set[Friend]
+      ): Boolean = {
+        if (discoveredPeople.isEmpty) false
+        else {
+          val person = discoveredPeople.head
+          if (person.id == target.id) true
+          else if (consideredPeople.contains(person))
+            bfs(target, consideredPeople, discoveredPeople.tail)
+          else
+            bfs(
+              target,
+              consideredPeople + person,
+              discoveredPeople.tail ++ storage(person.id).friends
+            )
+        }
+      }
+      bfs(storage(id2), Set(), storage(id1).friends)
+    }
+
   }
 
-  val DaButter = Butter
-  DaButter.addPerson("Bob Ross")
-  DaButter.addPerson("Ross Bob")
-  DaButter.addPerson("Furry Dinosaur")
-  DaButter.addPerson("Flippant Flamingo")
-  DaButter.addPerson("Dingo")
+  val DatButter = SocialNetwork
+  DatButter.addPerson("Bob Ross", Some("Burnt Toast"))
+  DatButter.addPerson("Ross Bob", Some("Lettuce"))
+  DatButter.addPerson("Furry Dinosaur", Some("Toast"))
+  DatButter.addPerson("Flippant Flamingo", Some("Butter"))
+  DatButter.addPerson("Dingo", gender = None)
 
-  DaButter.friend(1, 2)
-  DaButter.friend(1, 3)
-  DaButter.friend(1, 4)
-  DaButter.friend(2, 3)
-  DaButter.friend(3, 4)
+  DatButter.friend(1, 2)
+  DatButter.friend(1, 3)
+  DatButter.friend(1, 4)
+  DatButter.friend(2, 3)
+  DatButter.friend(3, 4)
 
-  DaButter.unfriend(3, 4)
+  DatButter.unfriend(3, 4)
+
+  DatButter.numberOfFriends(1)
+  DatButter.mostFriends
+  DatButter.numberWithNoFriends
 
 }
