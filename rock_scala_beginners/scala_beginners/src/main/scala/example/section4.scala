@@ -342,24 +342,11 @@ object TuplesAndMaps {
   val easy = (2, "dingo")
   easy.swap
   easy.copy(_2 = "ate my semicolons")
-  val map = Map(
-    1 -> "rubber",
-    2 -> "baby",
-    3 -> "buggy",
-    4 -> "bumpers"
-  )
+  val map = Map(1 -> "rubber", 2 -> "baby", 3 -> "buggy", 4 -> "bumpers")
 
-  val phoneBook = Map(
-    ("jim", 555),
-    ("bob", 123),
-    ("mary", 789)
-  )
+  val phoneBook = Map(("jim", 555), ("bob", 123), ("mary", 789))
 
-  val users = Map(
-    (1, ("jim", 555)),
-    (2, ("bob", 123)),
-    (3, ("mary", 789))
-  )
+  val users = Map((1, ("jim", 555)), (2, ("bob", 123)), (3, ("mary", 789)))
 
   users contains 2
 
@@ -375,6 +362,22 @@ object TuplesAndMaps {
 
   val names = List("Bob", "Janes", "Angela", "Mary", "Bart", "June")
   names.groupBy(name => name.charAt(0))
+
+  // use lamdas for inlining
+  def add: Int => Int => Int = a => b => a + b
+  def isEqual: Any => Any => Boolean = a => b => a == b
+
+  List(1, 2, 3, 4) filter { add(42) andThen isEqual(45) }
+
+  def toLowerCase: String => String = s => s.toLowerCase
+  def startsWith: String => String => Boolean = s => base => base.startsWith(s)
+
+  Map[String, Int]("Jim" -> 1, "Jack" -> 2, "Mary" -> 3) filterKeys {
+    startsWith("j") compose toLowerCase
+  }
+  Map[String, Int]("Jim" -> 1, "Jack" -> 2, "Mary" -> 3) filterKeys {
+    toLowerCase andThen startsWith("j")
+  }
 
 }
 
@@ -402,7 +405,7 @@ object tuples_maps_exercises {
   )
 
   phoneBook map { entry => entry._1.toLowerCase -> entry._2 }
-  // destroys new matching hashes with latest (unless hash exists already)
+// destroys new matching hashes with latest (unless hash exists already)
 
 }
 
@@ -429,10 +432,7 @@ object Optionals {
 
 object Options_exercises {
   import scala.util.Random
-  val config: Map[String, String] = Map(
-    "host" -> "176.23.24.1",
-    "port" -> "80"
-  )
+  val config: Map[String, String] = Map("host" -> "176.23.24.1", "port" -> "80")
 
   class Connection {
     def connect = "Connected" // connect to some server
@@ -456,9 +456,12 @@ object Options_exercises {
   // chained calls
   config
     .get("host")
-    .flatMap(host => config.get("port")
-    .flatMap(port => Connection(host, port))
-    .map(_.connect))
+    .flatMap(host =>
+      config
+        .get("port")
+        .flatMap(port => Connection(host, port))
+        .map(_.connect)
+    )
 
   // for comprehesion
   val status = for {
@@ -476,7 +479,9 @@ object handling_failure {
   val success = Success(3)
   val failure = Failure(new RuntimeException("SUPER FAILURE"))
 
-  def unsafeMethod(): String = throw new RuntimeException("NO STRING FOR YOU BUSTER")
+  def unsafeMethod(): String = throw new RuntimeException(
+    "NO STRING FOR YOU BUSTER"
+  )
   val potentialFailure = Try(unsafeMethod())
 
   val anotherPotentialFail = Try {
@@ -486,5 +491,54 @@ object handling_failure {
   // utilities
   potentialFailure.isSuccess
   potentialFailure orElse Try(Success("Dingo ate my semicolons"))
+
+}
+
+object excercise {
+  import scala.util.Random
+  import scala.util.Try
+
+  val hostname = "localhost"
+  val port = "8080"
+  def renderHTML(page: String) = page
+
+  class Connection {
+    def get(url: String): String = {
+      val random = new Random(System.nanoTime())
+      if (random.nextBoolean()) "<html>...</html>"
+      else throw new RuntimeException("Connection interupted")
+    }
+
+    def getSafe(url: String): Try[String] = Try(get(url))
+  }
+
+  object HttpService {
+    val random = new Random(System.nanoTime())
+    def getConnection(host: String, port: String): Connection = {
+      if (random.nextBoolean()) new Connection
+      else throw new RuntimeException("Port is already in use")
+    }
+
+    def getSafeConnection(host: String, port: String): Try[Connection] =
+      Try(getConnection(host, port))
+  }
+
+  // imperative
+  val possibleConnection = HttpService.getSafeConnection(hostname, port)
+  val possibleHtml =
+    possibleConnection.flatMap(connection => connection.getSafe("/home"))
+  possibleHtml.map(renderHTML)
+
+  // dot chained
+  HttpService
+    .getSafeConnection(hostname, port)
+    .flatMap(connection => connection.getSafe("/home"))
+    .map(renderHTML)
+
+  // for comprehesion
+  for {
+    connection <- HttpService.getSafeConnection(hostname, port)
+    html <- connection.getSafe("/home")
+  } renderHTML(html)
 
 }
